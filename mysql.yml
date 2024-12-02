@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: mysql-cluster
+spec:
+  serviceName: "mysql"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:5.7
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "ulrich"
+        - name: MYSQL_DATABASE
+          value: "ulrich"
+        - name: MYSQL_USER
+          value: "ulrich"
+        - name: MYSQL_PASSWORD
+          value: "ulrich"
+        - name: MYSQL_INITDB_SKIP_TZINFO
+          value: "1"
+        - name: MYSQL_ROOT_HOST
+          value: "%"
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+      volumes: 
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-pvc
