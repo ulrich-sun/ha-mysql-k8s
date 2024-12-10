@@ -5,7 +5,7 @@ metadata:
 data:
   run.sh: |
     #!/bin/sh
-    Sleep 10 # wait for vars to set
+    sleep 10 # wait for vars to set
     SET_INDEX=${HOSTNAME##*-}
     echo "Starting initializing for pod $SET_INDEX"
     if [ "$SET_INDEX" = "0" ]; then
@@ -17,7 +17,7 @@ data:
     elif [ "$SET_INDEX" = "1" ]; then
       cp /mnt/scripts/my-1.cnf /mnt/data/my.cnf
       cp /mnt/scripts/init-mysql-1.sql /mnt/data/b-init-mysql-cluster.sql
-      cp /mnt/scripts/init-test-script.sql /mnt/data/a-init-test-script.sql ## init.d.db files are executed in alphabatical order. non bootstrap members boot as super read only hence need to do init writes before cluster configs.      
+      cp /mnt/scripts/init-test-script.sql /mnt/data/a-init-test-script.sql
       cp /mnt/scripts/prep-work.sh /mnt/data/prep-work.sh
       touch /mnt/data/auto.cnf
     elif [ "$SET_INDEX" = "2" ]; then
@@ -40,8 +40,6 @@ data:
         echo "####### HENCE: BOOTSTRAP CLUSTER ON BOOT ############"  >> /mnt/data/my.cnf
         echo "loose-group_replication_bootstrap_group = ON" >> /mnt/data/my.cnf
         echo "####### AUTOMATED CONFIG APPEND END   ###############"  >> /mnt/data/my.cnf
-        # Sleep few seconds only on first cluster boot to open 3306 port before second node starts up. otherwise second node will also bootstap cluster.
-        # TODO : remove sleep and add nc lookup to check if 3306 service is up and running.
         echo "####### AUTOMATED CONFIG APPEND END   ###############"  >> /mnt/data/prep-work.sh
         echo "####### UNABLE TO DETECT RUNNING CLUSTER ############"  >> /mnt/data/prep-work.sh
         echo "####### HENCE: BOOTSTRAP CLUSTER ON BOOT ############"  >> /mnt/data/prep-work.sh
@@ -55,7 +53,6 @@ data:
     # https://dba.stackexchange.com/questions/287649/mysql-multi-master-group-replication-on-kubernetes
     [mysqld]
     ########################## GROUP REPLICATION CONFIG START #########################################
-    # General replication settings
     gtid_mode = ON
     enforce_gtid_consistency = ON
     master_info_repository = TABLE
@@ -65,53 +62,24 @@ data:
     log_bin = binlog
     binlog_format = ROW
     transaction_write_set_extraction = XXHASH64
-    ### group_replication_bootstrap only need when cluster boot for the first time. Hence, this is conditional.
-    ### Moved this config to append based on cluster state from init container.
-    #loose-group_replication_bootstrap_group = ON
     loose-group_replication_start_on_boot = ON
-    #loose-group_replication_ssl_mode = REQUIRED
-    #loose-group_replication_recovery_use_ssl = 1
-    # Shared replication group configuration
     loose-group_replication_group_name = "85cbd4a0-7338-46f1-b15e-28c1a26f465e"
     loose-group_replication_ip_whitelist = "mysql-0.mysql.default.svc.cluster.local,mysql-1.mysql.default.svc.cluster.local"
     loose-group_replication_group_seeds = "mysql-0.mysql.default.svc.cluster.local:33061,mysql-1.mysql.default.svc.cluster.local:33061"
-    # Single or Multi-primary mode? Uncomment these two lines
-    # for multi-primary mode, where any host can accept writes
     loose-group_replication_single_primary_mode = OFF
     loose-group_replication_enforce_update_everywhere_checks = ON
-    # Host specific replication configuration
     server_id = 1
-    server-id = 1
     bind-address = "mysql-0.mysql.default.svc.cluster.local"
     report_host = "mysql-0.mysql.default.svc.cluster.local"
     loose-group_replication_local_address = "mysql-0.mysql.default.svc.cluster.local:33061"
-    #########################  GROUP REPLICATION CONFIG END ###########################################
-    #
-    # Remove leading # and set to the amount of RAM for the most important data
-    # cache in MySQL. Start at 70% of total RAM for dedicated server, else 10%.
-    # innodb_buffer_pool_size = 128M
-    #
-    # Remove leading # to turn on a very important data integrity option: logging
-    # changes to the binary log between backups.
-    # log_bin
-    #
-    # Remove leading # to set options mainly useful for reporting servers.
-    # The server defaults are faster for transactions and fast SELECTs.
-    # Adjust sizes as needed, experiment to find the optimal values.
-    # join_buffer_size = 128M
-    # sort_buffer_size = 2M
-    # read_rnd_buffer_size = 2M
     skip-host-cache
     skip-name-resolve
     datadir=/var/lib/mysql
     socket=/var/lib/mysql/mysql.sock
     secure-file-priv=/var/lib/mysql-files
     user=mysql
-    # Disabling symbolic-links is recommended to prevent assorted security risks
     symbolic-links=0
-    #log-error=/var/log/mysqld.log
     relay_log=mysql-0-relay-bin
-    #group_replication_communication_debug_options="GCS_DEBUG_ALL"
     pid-file=/var/run/mysqld/mysqld.pid
   my-1.cnf: |
     # For advice on how to change settings please see
@@ -120,7 +88,6 @@ data:
     # https://dba.stackexchange.com/questions/287649/mysql-multi-master-group-replication-on-kubernetes
     [mysqld]
     ########################## GROUP REPLICATION CONFIG START #########################################
-    # General replication settings
     gtid_mode = ON
     enforce_gtid_consistency = ON
     master_info_repository = TABLE
@@ -130,100 +97,56 @@ data:
     log_bin = binlog
     binlog_format = ROW
     transaction_write_set_extraction = XXHASH64
-    ### group_replication_bootstrap only need when cluster boot for the first time. Hence, this is conditional.
-    ### Moved this config to append based on cluster state from init container.    
-    #loose-group_replication_bootstrap_group = OFF
     loose-group_replication_start_on_boot = ON
-    #loose-group_replication_ssl_mode = REQUIRED
-    #loose-group_replication_recovery_use_ssl = 1
-    # Shared replication group configuration
     loose-group_replication_group_name = "85cbd4a0-7338-46f1-b15e-28c1a26f465e"
     loose-group_replication_ip_whitelist = "mysql-0.mysql.default.svc.cluster.local,mysql-1.mysql.default.svc.cluster.local"
     loose-group_replication_group_seeds = "mysql-0.mysql.default.svc.cluster.local:33061,mysql-1.mysql.default.svc.cluster.local:33061"
-    # Single or Multi-primary mode? Uncomment these two lines
-    # for multi-primary mode, where any host can accept writes
     loose-group_replication_single_primary_mode = OFF
     loose-group_replication_enforce_update_everywhere_checks = ON
-    # Host specific replication configuration
     server_id = 2
-    server-id = 2
     bind-address = "mysql-1.mysql.default.svc.cluster.local"
     report_host = "mysql-1.mysql.default.svc.cluster.local"
     loose-group_replication_local_address = "mysql-1.mysql.default.svc.cluster.local:33061"
-    #########################  GROUP REPLICATION CONFIG END ###########################################
-    #
-    # Remove leading # and set to the amount of RAM for the most important data
-    # cache in MySQL. Start at 70% of total RAM for dedicated server, else 10%.
-    # innodb_buffer_pool_size = 128M
-    #
-    # Remove leading # to turn on a very important data integrity option: logging
-    # changes to the binary log between backups.
-    # log_bin
-    #
-    # Remove leading # to set options mainly useful for reporting servers.
-    # The server defaults are faster for transactions and fast SELECTs.
-    # Adjust sizes as needed, experiment to find the optimal values.
-    # join_buffer_size = 128M
-    # sort_buffer_size = 2M
-    # read_rnd_buffer_size = 2M
     skip-host-cache
     skip-name-resolve
     datadir=/var/lib/mysql
     socket=/var/lib/mysql/mysql.sock
     secure-file-priv=/var/lib/mysql-files
     user=mysql
-    # Disabling symbolic-links is recommended to prevent assorted security risks
     symbolic-links=0
-    #log-error=/var/log/mysqld.log
     relay_log=mysql-1-relay-bin
-    #group_replication_communication_debug_options="GCS_DEBUG_ALL"    
     pid-file=/var/run/mysqld/mysqld.pid
   prep-work.sh: |
     #!/bin/sh    
     ###### IMPORTANT REMOVE BELOW LINES BEFORE PROD DEPLOYMENTS. ####
-    ##This is just to make sure init-mysql.sql are executed each time while test clustering stuff ###########    
-    #rm -rf var/lib/mysql/auto.cnf
-    #rm -rf /var/lib/mysql/
+    # rm -rf /var/lib/mysql/auto.cnf
+    # rm -rf /var/lib/mysql/
   init-mysql-0.sql: |
     ######################### GR CLUSTER CONFIGS START ####################
     SET SQL_LOG_BIN=0;
-    #CREATE USER 'repl'@'%' IDENTIFIED BY 'repl' REQUIRE SSL;
     CREATE USER 'repl'@'%' IDENTIFIED BY 'repl';
     GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
     FLUSH PRIVILEGES;
     SET SQL_LOG_BIN=1;
     CHANGE MASTER TO MASTER_USER='repl', MASTER_PASSWORD='repl' FOR CHANNEL 'group_replication_recovery';
     INSTALL PLUGIN group_replication SONAME 'group_replication.so';
-    ###### FOLLOWING CONFIGS ARE NOT WORKING WHILE ON BOOT. NEED TO BOOTSTRAP FROM MY.CNF CONFIG ON BOOT.
-    ###### loose-group_replication_bootstrap_group = ON
-    ###### loose-group_replication_start_on_boot = ON
-    ###### KEEPING ABOVE CONFIGS ON MY.CNF ALSO NOT A SOLUTION FOR AD-HOC JOINS/LEAVES OF MEMBER NODES. NEED TO BRAINSTORM ANOTHER WAY!!
-    #SET GLOBAL group_replication_bootstrap_group=ON;
-    #START GROUP_REPLICATION;
-    #SET GLOBAL group_replication_bootstrap_group=OFF;
     ######################### GR CLUSTER CONFIGS END ######################
   init-mysql-1.sql: |
     SET SQL_LOG_BIN=0;
-    #CREATE USER 'repl'@'%' IDENTIFIED BY 'repl' REQUIRE SSL;
     CREATE USER 'repl'@'%' IDENTIFIED BY 'repl';
     GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
     FLUSH PRIVILEGES;
     SET SQL_LOG_BIN=1;
     CHANGE MASTER TO MASTER_USER='repl', MASTER_PASSWORD='repl' FOR CHANNEL 'group_replication_recovery';
     INSTALL PLUGIN group_replication SONAME 'group_replication.so';
-    ###### FOLLOWING CONFIGS ARE NOT WORKING. NEED TO ENABLE ON BOOT WITH MY.CNF
-    ###### loose-group_replication_bootstrap_group = OFF
-    ###### loose-group_replication_start_on_boot = ON
-    ###### KEEPING ABOVE CONFIGS ON MY.CNF ALSO NOT A SOLUTION FOR AD-HOC JOINS/LEAVES OF MEMBER NODES. NEED TO BRAINSTORM ANOTHER WAY!!    
-    #START GROUP_REPLICATION;
   init-test-script.sql: |
     ########################## TEST SCRIPT START ##########################
     CREATE DATABASE IF NOT EXISTS mirthdb;
     USE mirthdb;
-    CREATE TABLE IF NOT EXISTS test (ID int NOT NULL AUTO_INCREMENT, UTS varchar(255),increment varchar(255), PRIMARY KEY (ID)) ENGINE=InnoDB;;
+    CREATE TABLE IF NOT EXISTS test (ID int NOT NULL AUTO_INCREMENT, UTS varchar(255), increment varchar(255), PRIMARY KEY (ID)) ENGINE=InnoDB;
     CREATE USER IF NOT EXISTS 'mirth_init_user'@'localhost' IDENTIFIED BY 'aqwzsxedcrfv';
     CREATE USER IF NOT EXISTS 'mirth_init_user'@'%' IDENTIFIED BY 'aqwzsxedcrfv';
     GRANT ALL ON *.* TO 'mirth_init_user'@'localhost';
     GRANT ALL ON *.* TO 'mirth_init_user'@'%';
-    flush privileges;
-    ########################## TEST SCRIPT START END ######################
+    FLUSH PRIVILEGES;
+    ########################## TEST SCRIPT END ############################
