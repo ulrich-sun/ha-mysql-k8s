@@ -218,12 +218,12 @@ data:
     #START GROUP_REPLICATION;
   init-test-script.sql: |
     ########################## TEST SCRIPT START ##########################
-    CREATE DATABASE IF NOT EXISTS myDB;
-    USE myDB;
+    CREATE DATABASE IF NOT EXISTS mirthdb;
+    USE mirthdb;
     CREATE TABLE IF NOT EXISTS test (ID int NOT NULL AUTO_INCREMENT, UTS varchar(255),increment varchar(255), PRIMARY KEY (ID)) ENGINE=InnoDB;;
-    CREATE USER IF NOT EXISTS 'myuser'@'localhost' IDENTIFIED BY 'mypass';
-    CREATE USER IF NOT EXISTS 'myuser'@'%' IDENTIFIED BY 'mypass';
-    GRANT ALL ON *.* TO 'myuser'@'localhost';
-    GRANT ALL ON *.* TO 'myuser'@'%';
+    CREATE USER IF NOT EXISTS 'mirth_init_user'@'localhost' IDENTIFIED BY 'aqwzsxedcrfv';
+    CREATE USER IF NOT EXISTS 'mirth_init_user'@'%' IDENTIFIED BY 'aqwzsxedcrfv';
+    GRANT ALL ON *.* TO 'mirth_init_user'@'localhost';
+    GRANT ALL ON *.* TO 'mirth_init_user'@'%';
     flush privileges;
     ########################## TEST SCRIPT START END ######################

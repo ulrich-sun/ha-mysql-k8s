@@ -22,9 +22,9 @@ spec:
         - name: MYSQL_ROOT_PASSWORD
           value: "root"
         - name: MYSQL_USER
-          value: "myuser"
+          value: "mirth_init_user"
         - name: MYSQL_PASSWORD
-          value: "mypass"                         
+          value: "aqwzsxedcrfv"                         
         lifecycle:
           postStart:
             exec:
