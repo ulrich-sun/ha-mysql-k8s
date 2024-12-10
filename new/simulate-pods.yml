@@ -5,9 +5,9 @@ metadata:
 data:
   run.sh: |
     #!/bin/bash
-    username=myuser
-    password=mypass
-    dbname=myDB
+    username=mirth_init_user
+    password=aqwzsxedcrfv
+    dbname=mirthdb
     table=test
     host=mysql
     TS=$(date +%s)
@@ -47,13 +47,13 @@ spec:
     image: mysql/mysql-server:5.7.35
     command: [ "/bin/sh", "-c", "--" ]
     args: [ "/mnt/configs/run.sh" ]
-    resources:
-      requests:
-        memory: "512Mi"
-        cpu: "500m"
-      limits:
-        memory: "512Mi"
-        cpu: "500m"
+    # resources:
+    #   requests:
+    #     memory: "512Mi"
+    #     cpu: "500m"
+    #   limits:
+    #     memory: "512Mi"
+    #     cpu: "500m"
     volumeMounts:
     - name: test-config-vol
       mountPath: /mnt/configs     
