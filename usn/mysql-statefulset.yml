@@ -35,7 +35,7 @@ spec:
     spec:
       initContainers:
       - name: init-mysql
-        image: mysql:5.7
+        image: wiistodocker/bea-mysql:4.10.0-rc
         command:
         - bash
         - "-c"
@@ -76,7 +76,7 @@ spec:
           # Prepare the backup.
           xtrabackup --prepare --target-dir=/var/lib/mysql          
         volumeMounts:
-        - name: data
+        - name: mysql-data
           mountPath: /var/lib/mysql
           subPath: mysql
         - name: conf
