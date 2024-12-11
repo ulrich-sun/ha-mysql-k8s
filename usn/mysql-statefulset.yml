@@ -14,7 +14,7 @@ metadata:
     helm.sh/chart: bea-0.2.0-rc
     tier: backend
   name: mysql
-  namespace: wiis-dev
+  # namespace: wiis-dev
 spec:
   serviceName: "mysql"
   replicas: 1
