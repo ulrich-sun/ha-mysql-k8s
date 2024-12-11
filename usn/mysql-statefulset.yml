@@ -1,0 +1,134 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    meta.helm.sh/release-name: wiis-core
+    meta.helm.sh/release-namespace: wiis-dev
+  creationTimestamp: "2024-11-04T17:03:45Z"
+  labels:
+    app.kubernetes.io/instance: wiis-core
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: bea
+    app.kubernetes.io/version: 4.10.0-rc
+    context: mysql
+    helm.sh/chart: bea-0.2.0-rc
+    tier: backend
+  name: mysql
+  namespace: wiis-dev
+spec:
+  serviceName: "mysql"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: mysql
+        app.kubernetes.io/instance: wiis-core
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: bea
+        app.kubernetes.io/version: 4.10.0-rc
+        helm.sh/chart: bea-0.2.0-rc
+        tier: backend
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: root-password
+              name: mysql-credentials
+        - name: MIRTH_DB_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              key: mirth-database
+              name: mysql-config
+        - name: MIRTH_DB_USER
+          valueFrom:
+            secretKeyRef:
+              key: mirth-user-name
+              name: mysql-credentials
+        - name: MIRTH_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mirth-user-password
+              name: mysql-credentials
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              key: dbname
+              name: mysql-config
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              key: user-name
+              name: mysql-credentials
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: user-password
+              name: mysql-credentials
+        image: wiistodocker/bea-mysql:4.10.0-rc
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - mysqladmin -u root -p${MYSQL_ROOT_PASSWORD} ping
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: mysql
+        ports:
+        - containerPort: 3306
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - mysqladmin -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ping
+          failureThreshold: 3
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+          requests:
+            memory: 1Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /tmp/mysql_upload
+          name: mysql-upload
+        - mountPath: /var/lib/mysql
+          name: mysql-data
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: dockerhub-credentials
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-upload
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: mysql-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 5Gi

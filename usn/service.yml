@@ -1,0 +1,28 @@
+---
+# Source: bea/templates/mysql/svc.yml
+# General explanation, cf. core/svc.yml
+apiVersion: v1
+kind: Service
+metadata:
+  # Labels are for humans, annotations are for tools
+  labels:
+    # cf. core/deploy.yml
+    context: mysql
+    tier: backend
+    helm.sh/chart: bea-0.2.0-rc
+    app.kubernetes.io/name: bea
+    app.kubernetes.io/instance: mysql
+    app.kubernetes.io/version: "4.10.0-rc"
+    app.kubernetes.io/managed-by: Helm
+  name: mysql
+spec:
+  # cf. core/svc.yml
+  type: ClusterIP
+  ports:
+  # cf. core/svc.yml
+  - port: 3306
+    protocol: TCP
+    targetPort: 3306
+  # cf. core/svc.yml
+  selector:
+    app: mysql

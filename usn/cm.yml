@@ -1,0 +1,16 @@
+apiVersion: v1
+data:
+  dbname: bea
+  mirth-database: mirthdb
+kind: ConfigMap
+metadata:
+  annotations:
+    meta.helm.sh/release-name: wiis-core
+    meta.helm.sh/release-namespace: wiis-dev
+  creationTimestamp: "2024-11-04T17:03:45Z"
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: mysql-config
+  namespace: wiis-dev
+  resourceVersion: "274397"
+  uid: abd411e9-4e30-47c3-9dcc-4d792b2f24bd
